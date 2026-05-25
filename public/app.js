@@ -157,7 +157,7 @@ async function fetchTicker(ticker, force = false) {
     card.dataset.state = 'ready';
   } catch (e) {
     card.dataset.state = 'error';
-    card.querySelector('.ai-summary').textContent = `Could not load: ${e.message}`;
+    card.querySelector('.ai-summary').textContent = `Could not load data. Please try again later.`;
   }
 }
 
@@ -220,7 +220,7 @@ function populateCard(card, data) {
 
   // Summary + catalysts
   const summary = ai.error
-    ? `AI unavailable: ${ai.error}`
+    ? getFriendlyAiError(ai.error)
     : (ai.summary || 'No summary available.');
   const catalyst = ai.rumors_or_catalysts && ai.rumors_or_catalysts !== 'None notable.'
     ? `\n\nCatalyst: ${ai.rumors_or_catalysts}`
@@ -355,4 +355,15 @@ function renderGauge(card, score, sentiment) {
 function formatNumber(n) {
   if (typeof n !== 'number' || !isFinite(n)) return '--';
   return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getFriendlyAiError(rawError) {
+  const msg = String(rawError || '');
+  if (msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
+    return 'AI analysis unavailable — API quota exceeded. Will retry when the limit resets.';
+  }
+  if (msg.includes('503') || msg.includes('unavailable')) {
+    return 'AI service is temporarily down. Try refreshing shortly.';
+  }
+  return 'AI analysis temporarily unavailable.';
 }
